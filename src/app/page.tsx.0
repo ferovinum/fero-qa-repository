@@ -1,0 +1,347 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableHead,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+type Stock = {
+  id: number;
+  type: "wine" | "whisky";
+  price: number;
+  date: string;
+  quantity: number;
+  client_id: string;
+};
+
+type CreateStockRequest = Omit<Stock, "id">;
+
+type StockSummary = {
+  type: Stock['type'];
+  quantity: number;
+}
+
+export default function Home() {
+  const [clientId] = useState("111b");
+  const [stocks, setStocks] = useState<Stock[]>([]);
+
+  useEffect(() => {
+    fetch(`/api/stocks?client_id=${clientId}`)
+      .then((response) => response.json())
+      .then(setStocks);
+  }, []);
+
+  const columns: ColumnDef<Stock>[] = [
+    {
+      header: "Stock Type",
+      accessorKey: "type",
+    },
+    {
+      header: "Price",
+      accessorKey: "price",
+    },
+    {
+      header: "Quantity",
+      accessorKey: "quantity",
+    },
+    {
+      header: "Sale Date",
+      accessorKey: "date",
+    },
+  ];
+
+  const table = useReactTable({
+    columns,
+    data: stocks,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  // Add new summary columns definition
+  const summaryColumns: ColumnDef<StockSummary>[] = [
+    {
+      header: "Stock Type",
+      accessorKey: "type",
+    },
+    {
+      header: "Quantity",
+      accessorKey: "quantity",
+    },
+  ];
+
+  // Calculate summary data
+  const summaryData = stocks.reduce<StockSummary[]>((acc, stock) => {
+    const existingType = acc.find(item => item.type === stock.type);
+    if (existingType) {
+      existingType.quantity += stock.quantity;
+    } else {
+      acc.push({ type: stock.type, quantity: stock.quantity });
+    }
+    return acc;
+  }, []);
+
+  // Create summary table
+  const summaryTable = useReactTable({
+    columns: summaryColumns,
+    data: summaryData,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  const addStock = () => {
+    const request: CreateStockRequest = {
+      type: "wine",
+      price: 100,
+      date: new Date().toISOString().split("T")[0],
+      quantity: 50,
+      client_id: clientId,
+    };
+    fetch("http://localhost:4001/stocks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    })
+      .then((response) => response.json())
+      .then((data) => setStocks([...stocks, data]));
+  };
+
+  const buyStock = () => {
+    const request: CreateStockRequest = {
+      type: "wine",
+      price: 100,
+      date: new Date().toISOString().split("T")[0],
+      quantity: -50,
+      client_id: clientId,
+    };
+    fetch("http://localhost:4001/stocks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    })
+      .then((response) => response.json())
+      .then((data) => setStocks([...stocks, data]));
+  };
+
+  return (
+    <div className="min-h-screen p-8 pb-20 gap-16 sm:p-20">
+      <main className="flex flex-col gap-8 items-center sm:items-start">
+        <div className="flex gap-4">
+          {/* <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Buy Stock</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <form onSubmit={buyStock}>
+                <DialogHeader>
+                  <DialogTitle>Buy Stock</DialogTitle>
+                  <DialogDescription>
+                    Buy stock from Ferovinum.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="buy-type" className="text-right">
+                      Type
+                    </Label>
+                    <Input
+                      id="buy-type"
+                      value="wine"
+                      className="col-span-3"
+                      readOnly
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="buy-price" className="text-right">
+                      Price
+                    </Label>
+                    <Input
+                      type="number"
+                      id="buy-price"
+                      min={0}
+                      value="10"
+                      readOnly
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="buy-quantity" className="text-right">
+                      Quantity
+                    </Label>
+                    <Input
+                      type="number"
+                      id="buy-quantity"
+                      min={0}
+                      value="100"
+                      readOnly
+                      className="col-span-3"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="submit">Buy</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog> */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Sell Stock</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <form onSubmit={addStock}>
+                <DialogHeader>
+                  <DialogTitle>Sell Stock</DialogTitle>
+                  <DialogDescription>
+                    Sell additional stock to Ferovinum.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="type" className="text-right">
+                      Type
+                    </Label>
+                    <Input
+                      id="type"
+                      value="wine"
+                      className="col-span-3"
+                      readOnly
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="price" className="text-right">
+                      Price
+                    </Label>
+                    <Input
+                      type="number"
+                      id="price"
+                      min={0}
+                      value="10"
+                      readOnly
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="quantity" className="text-right">
+                      Price
+                    </Label>
+                    <Input
+                      type="number"
+                      id="quantity"
+                      min={0}
+                      value="100"
+                      readOnly
+                      className="col-span-3"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="submit">Sell</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="w-full overflow-x-auto">
+          <h2 className="text-lg font-semibold mb-4">Summary</h2>
+          <Table>
+            <TableHeader>
+              {summaryTable.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {summaryTable.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="w-full overflow-x-auto">
+          <h2 className="text-lg font-semibold mb-4">Transactions</h2>
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </main>
+    </div>
+  );
+}

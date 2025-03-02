@@ -1,0 +1,3 @@
+rootProject.name = 'ferovinum'
+include 'src:server'
+project(':src:server').name = 'server' 
