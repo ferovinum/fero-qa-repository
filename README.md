@@ -1,12 +1,17 @@
 # fero-qa-assignment
 
-Ferovinum helps companies in the wine and spirits industry scale.
+## Overview
 
-In this assignment, we showcase a very small slice of our business. In a typical scenario, a company
-would get funding from us by selling us their inventory (a certain quantity at a certain price).
+Ferovinum provides capital to businesses in the wine and spirits industry.
 
-This is a simple project that uses react and typescript in this particular use case for a client.
-They can see their inventory that they've sold to us and can sell more.
+This project demonstrates a simplified version of Ferovinum's trading platform, focusing specifically on wine and whisky inventory transactions.
+While Ferovinum offers comprehensive financing solutions across the wine and spirits industry, this application narrows in on the core trading functionality:
+
+- Viewing existing inventory that has been sold to Ferovinum
+- Executing new trades by selling additional inventory to Ferovinum
+
+In this assignment, we showcase a very small slice of our business.
+In a typical scenario, a company would get funding from us by selling us their inventory (at a certain quantity/price).
 
 ## Getting Started
 
@@ -20,8 +25,6 @@ You are not expected to have depth in any of:
 - next.js
 - @tanstack/table
 - Spring Boot
-
-## Getting Started
 
 ### Starting the Backend Server
 
